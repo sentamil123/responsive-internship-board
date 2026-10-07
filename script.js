@@ -1,91 +1,60 @@
-const internships = [
-  {
-    title: "Frontend Developer Intern",
-    company: "Nova Labs",
-    domain: "Web Development",
-    mode: "Remote",
-    duration: "3 months",
-    location: "India",
-    description: "Build responsive interfaces using HTML, CSS and JavaScript.",
-    url: "https://github.com/"
-  },
-  {
-    title: "Python Developer Intern",
-    company: "CodeNest",
-    domain: "Python",
-    mode: "Hybrid",
-    duration: "2 months",
-    location: "Chennai",
-    description: "Work on Python automation, APIs and data processing.",
-    url: "https://github.com/"
-  },
-  {
-    title: "UI/UX Design Intern",
-    company: "PixelCraft",
-    domain: "Design",
-    mode: "Remote",
-    duration: "3 months",
-    location: "India",
-    description: "Create user flows, wireframes and product interfaces.",
-    url: "https://github.com/"
-  },
-  {
-    title: "Data Analyst Intern",
-    company: "InsightWorks",
-    domain: "Data Science",
-    mode: "On-site",
-    duration: "4 months",
-    location: "Bengaluru",
-    description: "Explore datasets and create reports and dashboards.",
-    url: "https://github.com/"
-  },
-  {
-    title: "AI/ML Intern",
-    company: "FutureMind",
-    domain: "Artificial Intelligence",
-    mode: "Hybrid",
-    duration: "3 months",
-    location: "Chennai",
-    description: "Assist with machine-learning experiments and evaluation.",
-    url: "https://github.com/"
-  },
-  {
-    title: "Node.js Backend Intern",
-    company: "CloudBridge",
-    domain: "Backend Development",
-    mode: "Remote",
-    duration: "3 months",
-    location: "India",
-    description: "Develop REST APIs and backend services using Node.js.",
-    url: "https://github.com/"
-  }
-];
+const API_URL = "http://localhost:3000";
 
 const searchInput = document.getElementById("searchInput");
 const domainFilter = document.getElementById("domainFilter");
 const clearButton = document.getElementById("clearButton");
-const emptyClearButton = document.getElementById("emptyClearButton");
 const retryButton = document.getElementById("retryButton");
+const emptyClearButton = document.getElementById("emptyClearButton");
+
 const cardGrid = document.getElementById("cardGrid");
-const emptyState = document.getElementById("emptyState");
 const errorState = document.getElementById("errorState");
+const emptyState = document.getElementById("emptyState");
 const resultCount = document.getElementById("resultCount");
 
-function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, function (char) {
-    const entities = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    };
-    return entities[char];
-  });
+let internships = [];
+
+// Load internship data from API
+async function loadInternships() {
+  showLoading();
+
+  try {
+    const response = await fetch(`${API_URL}/internships`);
+
+    if (!response.ok) {
+      throw new Error("API request failed");
+    }
+
+    const result = await response.json();
+
+    internships = result.data || result;
+
+    createDomainOptions();
+    renderInternships();
+  } catch (error) {
+    showError();
+  }
 }
 
-function loadDomains() {
+// Loading state
+function showLoading() {
+  errorState.hidden = true;
+  emptyState.hidden = true;
+  cardGrid.innerHTML = "<p>Loading internships...</p>";
+}
+
+// Error state
+function showError() {
+  errorState.hidden = false;
+  emptyState.hidden = true;
+  cardGrid.innerHTML = "";
+  resultCount.textContent = "0";
+}
+
+// Create domain filter options
+function createDomainOptions() {
   const domains = [...new Set(internships.map(item => item.domain))];
+
+  domainFilter.innerHTML = '<option value="all">All domains</option>';
 
   domains.forEach(domain => {
     const option = document.createElement("option");
@@ -95,121 +64,175 @@ function loadDomains() {
   });
 }
 
-function getFilteredInternships() {
-  const search = searchInput.value.trim().toLowerCase();
-  const domain = domainFilter.value;
+// Render internships
+function renderInternships() {
+  const searchText = searchInput.value.toLowerCase().trim();
+  const selectedDomain = domainFilter.value;
 
-  return internships.filter(item => {
-    const text = [
-      item.title,
-      item.company,
-      item.domain,
-      item.location,
-      item.description
-    ].join(" ").toLowerCase();
+  const filtered = internships.filter(item => {
+    const matchesSearch =
+      item.title.toLowerCase().includes(searchText) ||
+      item.company.toLowerCase().includes(searchText) ||
+      item.domain.toLowerCase().includes(searchText);
 
-    const searchMatch = !search || text.includes(search);
-    const domainMatch = domain === "all" || item.domain === domain;
+    const matchesDomain =
+      selectedDomain === "all" ||
+      item.domain === selectedDomain;
 
-    return searchMatch && domainMatch;
+    return matchesSearch && matchesDomain;
   });
-}
 
-function displayInternships(items) {
   cardGrid.innerHTML = "";
+  resultCount.textContent = filtered.length;
 
-  items.forEach(item => {
+  if (filtered.length === 0) {
+    emptyState.hidden = false;
+    errorState.hidden = true;
+    return;
+  }
+
+  emptyState.hidden = true;
+  errorState.hidden = true;
+
+  filtered.forEach(item => {
     const card = document.createElement("article");
-
-    card.className = "internship-card";
-    card.tabIndex = 0;
+    card.className = "card";
 
     card.innerHTML = `
-      <div class="card-top">
-        <div>
-          <h3>${escapeHTML(item.title)}</h3>
-          <p class="company">${escapeHTML(item.company)}</p>
-        </div>
-
-        <span class="tag">
-          ${escapeHTML(item.domain)}
-        </span>
-      </div>
-
-      <div class="meta">
-        <span>${escapeHTML(item.mode)}</span>
-        <span>${escapeHTML(item.duration)}</span>
-        <span>${escapeHTML(item.location)}</span>
-      </div>
-
-      <p>${escapeHTML(item.description)}</p>
-
-      <a
-        class="apply-link"
-        href="${escapeHTML(item.url)}"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        View opportunity →
-      </a>
+      <h3>${escapeHTML(item.title)}</h3>
+      <p><strong>Company:</strong> ${escapeHTML(item.company)}</p>
+      <p><strong>Domain:</strong> ${escapeHTML(item.domain)}</p>
+      <button type="button" class="apply-button" data-id="${item.id}">
+        Apply Now
+      </button>
     `;
-
-    card.addEventListener("keydown", function (event) {
-      if (event.key === "Enter") {
-        card.querySelector(".apply-link").click();
-      }
-    });
 
     cardGrid.appendChild(card);
   });
+
+  document.querySelectorAll(".apply-button").forEach(button => {
+    button.addEventListener("click", () => {
+      showApplicationForm(button.dataset.id);
+    });
+  });
 }
 
-function updateBoard() {
+// Application form
+function showApplicationForm(internshipId) {
+  const existing = document.getElementById("applicationForm");
+
+  if (existing) {
+    existing.remove();
+  }
+
+  const form = document.createElement("form");
+  form.id = "applicationForm";
+  form.innerHTML = `
+    <h2>Apply for Internship</h2>
+
+    <label for="appName">Name</label>
+    <input id="appName" name="name" type="text" required>
+
+    <label for="appEmail">Email</label>
+    <input id="appEmail" name="email" type="email" required>
+
+    <input
+      id="appInternshipId"
+      name="internship_id"
+      type="hidden"
+      value="${internshipId}"
+    >
+
+    <button type="submit">Submit Application</button>
+
+    <p id="applicationMessage"></p>
+  `;
+
+  document.querySelector("main").prepend(form);
+
+  form.addEventListener("submit", submitApplication);
+
+  form.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
+
+// Submit application to API
+async function submitApplication(event) {
+  event.preventDefault();
+
+  const form = event.target;
+  const message = document.getElementById("applicationMessage");
+
+  const name = form.name.value.trim();
+  const email = form.email.value.trim();
+  const internship_id = form.internship_id.value;
+
+  if (!name || !email || !internship_id) {
+    message.textContent = "Please fill all required fields.";
+    return;
+  }
+
+  if (!email.includes("@")) {
+    message.textContent = "Please enter a valid email.";
+    return;
+  }
+
+  message.textContent = "Submitting...";
+
   try {
-    const results = getFilteredInternships();
+    const response = await fetch(`${API_URL}/applications`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        internship_id: Number(internship_id),
+        name,
+        email
+      })
+    });
 
-    resultCount.textContent = results.length;
+    const result = await response.json();
 
-    displayInternships(results);
-
-    if (results.length === 0) {
-      emptyState.hidden = false;
-      cardGrid.hidden = true;
-    } else {
-      emptyState.hidden = true;
-      cardGrid.hidden = false;
+    if (!response.ok) {
+      throw new Error(result.error || "Application failed");
     }
 
-    errorState.hidden = true;
-  } catch (error) {
-    console.error(error);
+    message.textContent =
+      "Application submitted successfully!";
+    
+    form.reset();
 
-    cardGrid.hidden = true;
-    emptyState.hidden = true;
-    errorState.hidden = false;
+  } catch (error) {
+    message.textContent = error.message;
   }
 }
 
+// Prevent HTML injection
+function escapeHTML(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+// Clear filters
 function clearFilters() {
   searchInput.value = "";
   domainFilter.value = "all";
-  updateBoard();
-  searchInput.focus();
+  renderInternships();
 }
 
-searchInput.addEventListener("input", updateBoard);
-domainFilter.addEventListener("change", updateBoard);
-
+// Events
+searchInput.addEventListener("input", renderInternships);
+domainFilter.addEventListener("change", renderInternships);
 clearButton.addEventListener("click", clearFilters);
+retryButton.addEventListener("click", loadInternships);
 emptyClearButton.addEventListener("click", clearFilters);
 
-retryButton.addEventListener("click", updateBoard);
-
-document.addEventListener("keydown", function (event) {
-  if (event.key === "Escape") {
-    clearFilters();
-  }
-});
-
-loadDomains();
-updateBoard();
+// Start
+loadInternships();
