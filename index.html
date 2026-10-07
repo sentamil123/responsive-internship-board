@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Responsive Internship Board">
+  <title>Internship Board</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="header">
+  <div class="container header-content">
+    <div>
+      <p class="eyebrow">CAREER HUB</p>
+      <h1>Internship Board</h1>
+      <p>Find internships by role, company and domain.</p>
+    </div>
+
+    <div class="count">
+      <span id="resultCount">0</span> opportunities
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <section class="filters">
+    <h2>Find an Internship</h2>
+
+    <div class="filter-grid">
+
+      <div>
+        <label for="searchInput">Search internships</label>
+        <input
+          id="searchInput"
+          type="search"
+          placeholder="Try Python, frontend, AI..."
+        >
+      </div>
+
+      <div>
+        <label for="domainFilter">Domain</label>
+        <select id="domainFilter">
+          <option value="all">All domains</option>
+        </select>
+      </div>
+
+      <button id="clearButton" type="button">
+        Clear filters
+      </button>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">
+      <p class="eyebrow">LATEST ROLES</p>
+      <h2>Available Internships</h2>
+    </div>
+
+    <div id="errorState" class="state error" hidden>
+      <h3>Something went wrong</h3>
+      <p>We could not load the internship data.</p>
+      <button id="retryButton" type="button">Try again</button>
+    </div>
+
+    <div id="emptyState" class="state" hidden>
+      <h3>No internships found</h3>
+      <p>Try another keyword or choose a different domain.</p>
+      <button id="emptyClearButton" type="button">
+        Reset filters
+      </button>
+    </div>
+
+    <div id="cardGrid" class="cards"></div>
+  </section>
+
+</main>
+
+<footer>
+  <p>Responsive Internship Board Project</p>
+</footer>
+
+<script src="script.js"></script>
+
+</body>
+      </html>
